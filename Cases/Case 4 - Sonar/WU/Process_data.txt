@@ -1,0 +1,73 @@
+#include "Talkthrough.h"
+
+// importing chirp-signal
+short mysig[241] = {
+
+#include "minFil.dat"
+
+};
+
+// defines recording array
+signed int recording[1000];
+
+int i = 0;
+
+// Modify and insert your notch filter here!!!!
+short myVolume(short x)
+{
+	// Attenuation
+	return x>>2;
+}
+
+//--------------------------------------------------------------------------//
+// Function:	Process_Data()												//
+//																			//
+// Description: This function is called from inside the SPORT0 ISR every 	//
+//				time a complete audio frame has been received. The new 		//
+//				input samples can be found in the variables iChannel0LeftIn,//
+//				iChannel0RightIn, iChannel1LeftIn and iChannel1RightIn 		//
+//				respectively. The processed	data should be stored in 		//
+//				iChannel0LeftOut, iChannel0RightOut, iChannel1LeftOut,		//
+//				iChannel1RightOut, iChannel2LeftOut and	iChannel2RightOut	//
+//				respectively.												//
+//--------------------------------------------------------------------------//
+void Process_Data(void)
+{
+
+	// FlagAMode is changed by using pushbutton	SW4 on board..
+
+	switch (FlagAMode) {
+		case PLAY_AND_RECORD : 
+
+			// checks if all of the chirp-signal has been played
+			if(i < 241)
+			{	
+			//Chirp output from channel0 (one of these channels (0 or 1) is redundant)
+			iChannel0LeftOut = (((int)mysig[i])<<14);     	
+			iChannel0RightOut = (((int)mysig[i])<<14); 
+		
+			//Chirp outpur from channel1 (one of these channels (0 or 1) is redundant)
+			iChannel1LeftOut = (((int)mysig[i])<<14); 
+			iChannel1RightOut = (((int)mysig[i])<<14);
+			}
+			
+			// Recording the first part of signal (first 241 samples)
+			recording[i] = iChannel1RightIn;
+			
+			// Incrementing i
+			i++;
+			
+			// checks if the desired recording length (1000 samples) has been reached
+			if(i==5000)
+			{
+				FlagAMode = WAIT_STATE
+				i = 0;
+			}
+
+			break;
+			
+		// this case is just for waiting, so that we are not playing/recording all the time
+		case WAIT_STATE :
+	
+			break;
+}
